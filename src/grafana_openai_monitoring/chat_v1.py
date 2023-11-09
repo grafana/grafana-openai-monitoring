@@ -74,7 +74,7 @@ def monitor(func, metrics_url, logs_url, metrics_username, logs_username, access
                         "job": "integrations/openai", 
                         "prompt": prompt, 
                         "model": response.model, 
-                        "finish_reason": response["choices"][0]["finish_reason"],
+                        "finish_reason": response.choices[0].finish_reason,
                         "prompt_tokens": str(response.usage.prompt_tokens), 
                         "completion_tokens": str(response.usage.completion_tokens), 
                         "total_tokens": str(response.usage.total_tokens)
@@ -82,7 +82,7 @@ def monitor(func, metrics_url, logs_url, metrics_username, logs_username, access
                     "values": [
                         [
                             str(int(time.time()) * 1000000000),
-                            response["choices"][0]['text']
+                            response.choices[0].text
                         ]
                     ]
 

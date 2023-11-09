@@ -32,15 +32,16 @@ To monitor ChatCompletions using the OpenAI API, you can use the `chat_v2.monito
 Here's how to set it up:
 
 ```python
-import openai
+from openai import OpenAI
 from grafana_openai_monitoring import chat_v2
 
-# Set your OpenAI API key
-openai.api_key = "YOUR_OPENAI_API_KEY"
+client = OpenAI(
+    api_key="YOUR_OPENAI_API_KEY",
+)
 
-# Apply the custom decorator to the OpenAI API function
-openai.ChatCompletion.create = chat_v2.monitor(
-    openai.ChatCompletion.create,
+# Apply the monitoring function over the client(OpenAI() object)
+client.chat.completions.create = chat_v2.monitor(
+    client.chat.completions.create,
     metrics_url="YOUR_PROMETHEUS_METRICS_URL",  # Example: "https://prometheus.grafana.net/api/prom"
     logs_url="YOUR_LOKI_LOGS_URL",  # Example: "https://logs.example.com/loki/api/v1/push/"
     metrics_username="YOUR_METRICS_USERNAME",  # Example: "123456"
@@ -48,8 +49,8 @@ openai.ChatCompletion.create = chat_v2.monitor(
     access_token="YOUR_ACCESS_TOKEN"  # Example: "glc_eyasdansdjnaxxxxxxxxxxx"
 )
 
-# Now any call to openai.ChatCompletion.create will be automatically tracked
-response = openai.ChatCompletion.create(model="gpt-4", max_tokens=100, messages=[{"role": "user", "content": "What is Grafana?"}])
+# Now any call to chat.completions.create will be automatically tracked
+response = client.chat.completions.create(model="gpt-4", max_tokens=100, messages=[{"role": "user", "content": "What is Grafana?"}])
 print(response)
 ```
 
@@ -60,15 +61,16 @@ To monitor completions using the OpenAI API, you can use the `chat_v1.monitor` d
 Here's how to apply it:
 
 ```python
-import openai
+from openai import OpenAI
 from grafana_openai_monitoring import chat_v1
 
-# Set your OpenAI API key
-openai.api_key = "YOUR_OPENAI_API_KEY"
+client = OpenAI(
+    api_key="YOUR_OPENAI_API_KEY",
+)
 
 # Apply the custom decorator to the OpenAI API function
-openai.Completion.create = chat_v1.monitor(
-    openai.Completion.create,
+client.completions.create = chat_v1.monitor(
+    client.completions.create,
     metrics_url="YOUR_PROMETHEUS_METRICS_URL",  # Example: "https://prometheus.grafana.net/api/prom"
     logs_url="YOUR_LOKI_LOGS_URL",  # Example: "https://logs.example.com/loki/api/v1/push/"
     metrics_username="YOUR_METRICS_USERNAME",  # Example: "123456"
@@ -77,7 +79,7 @@ openai.Completion.create = chat_v1.monitor(
 )
 
 # Now any call to openai.Completion.create will be automatically tracked
-response = openai.Completion.create(model="davinci", max_tokens=100, prompt="Isn't Grafana the best?")
+response = client.completions.create(model="davinci", max_tokens=100, prompt="Isn't Grafana the best?")
 print(response)
 ```
 
