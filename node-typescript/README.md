@@ -52,3 +52,11 @@ for await(const chunk of result){
     console.log(chunk.choices[0].delta.content)
 }
 ```
+
+
+## Build
+To build the library locally run following command. This generates a `/dist` folder
+
+```bash
+npm run build
+```
