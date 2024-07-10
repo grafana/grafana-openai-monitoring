@@ -1,9 +1,10 @@
-import {encode} from 'gpt-3-encoder'
+import {encode} from 'gpt-tokenizer'
 
 
 
 export function tokenCount(text: string) {
     return encode(text).length
+    // return 1
 }
 
 // Function to check if all required arguments are provided and modify metrics and logs URLs

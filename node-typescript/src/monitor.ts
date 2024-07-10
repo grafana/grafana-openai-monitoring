@@ -1,3 +1,4 @@
+import { Console } from 'console';
 import {
     check,
     calculateCost,
@@ -10,7 +11,7 @@ import {
 } from './helpers.js'
 
 import OpenAI from 'openai';
-import { ChatCompletionChunk, ChatCompletionContentPart, ChatCompletionContentPartText, ChatCompletion } from 'openai/resources';
+import { ChatCompletionChunk, ChatCompletionContentPart, ChatCompletionContentPartText, ChatCompletion } from 'openai/resources/chat/completions';
 import { Stream } from 'openai/streaming';
 
 
@@ -34,26 +35,37 @@ export function monitor(openai: OpenAI, options: Options) {
     const validatedURL = check(metrics_url, logs_url, metrics_username, logs_username, access_token) // 
 
     // Save original method
-    const originalCreate = openai.chat.completions.create;
+    // const originalCreate = openai.chat.completions.create;
+    // const originalCreate = openai.chat.completions.create.bind(openai.chat.completions);
 
+    const originalCreate = openai.chat.completions.create.bind(openai.chat.completions) as
+    (params: any, options: any) => Promise<any>;
 
-    // @ts-ignore : monkey patching
-    openai.chat.completions.create = async function(params, options) {  
-        
+    (openai.chat.completions.create as any) = async function(params : any, options : any) {  
+        console.log(params)
+        console.log(originalCreate)
         if(params.stream){
 
             const start = performance.now();
-            const response = await originalCreate.call(this, params, options) as Stream<ChatCompletionChunk>;
+            const response = await originalCreate(params, options) as Stream<ChatCompletionChunk>;
+            console.log(response)
             
+            const [stream1, stream2] = response.tee();
             (async function() {
                     // let promptMessage = params.messages[0].content;
                 // TODO
                 // Shouldnt it be params.messages[-1] to get the latest prompt from the array??????
                 const promptMessage = params.messages[0];
-                const text = promptMessage.content as string || ((promptMessage.content as ChatCompletionContentPart[])
-                    .find(p => p.type =="text") as ChatCompletionContentPartText).text || "";
+                let text = typeof promptMessage.content == "string" ? promptMessage.content : undefined
 
-
+                if(!text){
+                    let contentArray = promptMessage.content as ChatCompletionContentPart[]
+                    let textPart = contentArray.find(p => p.type == "text") as ChatCompletionContentPartText
+                    text = textPart?.text || ""
+                }
+                
+               
+                console.log(text)
                 const promptTokens = tokenCount(text);
                 let completionTokens = 0;
 
@@ -61,7 +73,7 @@ export function monitor(openai: OpenAI, options: Options) {
 
                 let firstChunkTime = -1
 
-                for await(const chunk of response){
+                for await(const chunk of stream2){
                     if(firstChunkTime == -1)
                         firstChunkTime = performance.now();
                     completionTokens++
@@ -130,13 +142,13 @@ export function monitor(openai: OpenAI, options: Options) {
             })()
 
 
-            return await originalCreate.call(this, params, options);
+            return stream1
         }
 
         const start = performance.now();
 
         // Call original method
-        const response = await originalCreate.call(this, params, options) as ChatCompletion;
+        const response = await originalCreate(params, options) as ChatCompletion;
         const end = performance.now();
         const duration = (end - start) / 1000;
 

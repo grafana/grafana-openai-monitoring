@@ -1,15 +1,15 @@
 {
     "compilerOptions": {
-      "target": "ES2020",
-      "module": "ESNext",
+      "target": "ES2015",
+      "module": "Node16",
       "strict": true,
       "esModuleInterop": true,
       "outDir": "./dist",
       "rootDir": "./src",
-      "moduleResolution": "node",
-      "declaration": true,
-      "declarationMap": true,
-      "sourceMap": true
+      "moduleResolution": "Node16",
+      "declaration": false,
+      "declarationMap": false,
+      "sourceMap": false
     },
     "include": ["src"]
 }

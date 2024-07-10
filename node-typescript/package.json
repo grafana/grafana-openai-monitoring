@@ -1,10 +1,7 @@
 {
-  "name": "deno",
-  "version": "1.0.0",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
+  "name": "grafana-openai-monitoring-with-streaming",
+  "version": "1.0.6",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "start": "tsc && node dist/index.js"
@@ -19,8 +16,9 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
-    "gpt-3-encoder": "^1.1.4",
-    "openai": "^4.52.3"
+    "dotenv": "^16.4.5",
+    "gpt-tokenizer": "^2.1.2",
+    "openai": "^4.52.4"
   },
   "type": "module"
 }
