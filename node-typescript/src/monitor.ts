@@ -41,32 +41,28 @@ export function monitor(openai: OpenAI, options: Options) {
     const originalCreate = openai.chat.completions.create.bind(openai.chat.completions) as
     (params: any, options: any) => Promise<any>;
 
-    (openai.chat.completions.create as any) = async function(params : any, options : any) {  
-        console.log(params)
-        console.log(originalCreate)
-        if(params.stream){
+    // @ts-ignore : monkey patching
+    openai.chat.completions.create = async function(params, options) {  
 
+        const promptMessage = params.messages.at(-1)!
+
+        let promptText = typeof promptMessage.content == "string" ? promptMessage.content : undefined
+
+        if(!promptText){
+            let contentArray = promptMessage.content as ChatCompletionContentPart[]
+            let textPart = contentArray.find(p => p.type == "text") as ChatCompletionContentPartText
+            promptText = textPart?.text || ""
+            if(contentArray.length > 1)
+                promptText += ` [+${contentArray.length - 1} images]`
+        }
+
+        if(params.stream){
             const start = performance.now();
             const response = await originalCreate(params, options) as Stream<ChatCompletionChunk>;
-            console.log(response)
             
             const [stream1, stream2] = response.tee();
             (async function() {
-                    // let promptMessage = params.messages[0].content;
-                // TODO
-                // Shouldnt it be params.messages[-1] to get the latest prompt from the array??????
-                const promptMessage = params.messages[0];
-                let text = typeof promptMessage.content == "string" ? promptMessage.content : undefined
-
-                if(!text){
-                    let contentArray = promptMessage.content as ChatCompletionContentPart[]
-                    let textPart = contentArray.find(p => p.type == "text") as ChatCompletionContentPartText
-                    text = textPart?.text || ""
-                }
-                
-               
-                console.log(text)
-                const promptTokens = tokenCount(text);
+                const promptTokens = tokenCount(promptText);
                 let completionTokens = 0;
 
                 const chunks = []
@@ -92,10 +88,10 @@ export function monitor(openai: OpenAI, options: Options) {
                         {
                         stream: {
                             job: 'integrations/openai',
-                            prompt: params.messages[0].content,
+                            prompt: promptText,
                             model: chunks[0].model,
                             role: "assistant",
-                            finish_reason: chunks[chunks.length - 1].choices[0].finish_reason,
+                            finish_reason: chunks.at(-1)!.choices[0].finish_reason,
                             prompt_tokens: promptTokens.toString(),
                             completion_tokens: completionTokens.toString(),
                             total_tokens: (promptTokens + completionTokens).toString(),
@@ -161,7 +157,7 @@ export function monitor(openai: OpenAI, options: Options) {
                 {
                 stream: {
                     job: 'integrations/openai',
-                    prompt: params.messages[0].content,
+                    prompt: promptText,
                     model: response.model,
                     role: response.choices[0].message.role,
                     finish_reason: response.choices[0].finish_reason,
