@@ -26,6 +26,12 @@ monitor(openai, {
     metrics_username: 12345,
     logs_username: 12345,
     access_token: "...",
+
+    // Log the user's prompt in grafana (default true)
+    log_prompt: true,
+    // Log the user's response in grafana (default true)
+    log_response: true
+    // Setting this to false logs "no data" as value 
 });
 
 

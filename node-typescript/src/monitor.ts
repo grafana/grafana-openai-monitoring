@@ -22,21 +22,24 @@ export type Options = {
     metrics_username: number,
     logs_username: number,
     access_token: string,
+    log_prompt?: boolean,
+    log_response?: boolean,
 }
 
-export function monitor(openai: OpenAI, options: Options) {
-    const {
-        metrics_url,
-        logs_url,
-        metrics_username,
-        logs_username,
-        access_token
-    } = options;
+export function monitor(openai: OpenAI, {
+    metrics_url, 
+    access_token, 
+    logs_url, 
+    logs_username, 
+    metrics_username,
+    log_prompt = true,
+    log_response = true,
+
+}: Options) {
+
     const validatedURL = check(metrics_url, logs_url, metrics_username, logs_username, access_token) // 
 
     // Save original method
-    // const originalCreate = openai.chat.completions.create;
-    // const originalCreate = openai.chat.completions.create.bind(openai.chat.completions);
 
     const originalCreate = openai.chat.completions.create.bind(openai.chat.completions) as
     (params: any, options: any) => Promise<any>;
@@ -88,7 +91,7 @@ export function monitor(openai: OpenAI, options: Options) {
                         {
                         stream: {
                             job: 'integrations/openai',
-                            prompt: promptText,
+                            prompt: log_prompt ? promptText : "no data",
                             model: chunks[0].model,
                             role: "assistant",
                             finish_reason: chunks.at(-1)!.choices[0].finish_reason,
@@ -99,7 +102,7 @@ export function monitor(openai: OpenAI, options: Options) {
                         values: [
                             [
                                 (Math.floor(Date.now() / 1000) * 1000000000).toString(),
-                                content,
+                                log_response ? content : "no data",
                             ],
                         ],
                         },
@@ -157,7 +160,7 @@ export function monitor(openai: OpenAI, options: Options) {
                 {
                 stream: {
                     job: 'integrations/openai',
-                    prompt: promptText,
+                    prompt: log_prompt ? promptText : "no data",
                     model: response.model,
                     role: response.choices[0].message.role,
                     finish_reason: response.choices[0].finish_reason,
@@ -168,7 +171,7 @@ export function monitor(openai: OpenAI, options: Options) {
                 values: [
                     [
                     (Math.floor(Date.now() / 1000) * 1000000000).toString(),
-                    response.choices[0].message.content,
+                    log_response ? response.choices[0].message.content : "no data",
                     ],
                 ],
                 },

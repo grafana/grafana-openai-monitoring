@@ -67,6 +67,8 @@ const modelPrices = {
   "gpt-4-32k": [0.06, 0.12],
   "gpt-4-1106-preview": [0.01, 0.03],
   "gpt-4-1106-vision-preview": [0.01, 0.03],
+  "gpt-4o": [0.01, 0.02],
+  "gpt-4o-2024-05-13": [0.01, 0.02]
 };
 
 export type Model = keyof typeof modelPrices

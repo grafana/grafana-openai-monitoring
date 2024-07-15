@@ -15,6 +15,8 @@ monitor(openai, {
     metrics_username: Number(process.env.METRICS_USERNAME),
     logs_username: Number(process.env.LOGS_USERNAME),
     access_token: process.env.ACCESS_TOKEN,
+    log_prompt: false,
+    log_response: false
 })
 
 
@@ -27,7 +29,8 @@ const result = await openai.chat.completions.create({
         }
     ] }],
     // messages: [{ role: 'user', content: 'Say this is a test' }],
-    model: 'gpt-3.5-turbo',
+    // model: 'gpt-3.5-turbo',
+    model: 'gpt-4o',
     stream: true
     });
 
