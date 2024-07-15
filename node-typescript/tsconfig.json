@@ -7,9 +7,9 @@
       "outDir": "./dist",
       "rootDir": "./src",
       "moduleResolution": "Node16",
-      "declaration": false,
-      "declarationMap": false,
-      "sourceMap": false
+      "declaration": true,
+      "declarationMap": true,
+      "sourceMap": true
     },
     "include": ["src"]
 }
