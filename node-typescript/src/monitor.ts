@@ -1,11 +1,11 @@
 import { Console } from 'console';
 import {
     check,
-    calculateCost,
+    calculateCostChatModel,
     sendLogs,
     sendMetrics,
     Logs, 
-    Model,
+    ChatModel,
     tokenCount,
      
 } from './helpers.js'
@@ -85,7 +85,7 @@ export function monitor(openai: OpenAI, {
 
                 const content = chunks.map((chunk) => chunk.choices[0].delta.content).join('')
 
-                const cost = calculateCost(params.model as Model, promptTokens, completionTokens);
+                const cost = calculateCostChatModel(params.model as ChatModel, promptTokens, completionTokens);
                 const logs = {
                     streams: [
                         {
@@ -152,7 +152,7 @@ export function monitor(openai: OpenAI, {
         const duration = (end - start) / 1000;
 
          // Calculate the cost based on the response's usage
-        const cost = calculateCost(params.model as Model, response.usage!.prompt_tokens, response.usage!.completion_tokens);
+        const cost = calculateCostChatModel(params.model as ChatModel, response.usage!.prompt_tokens, response.usage!.completion_tokens);
 
         // Prepare logs to be sent
         const logs = {

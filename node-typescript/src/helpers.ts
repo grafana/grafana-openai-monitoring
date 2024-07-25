@@ -46,44 +46,74 @@ export function check(metrics_url : string, logs_url : string, metrics_username 
 }
 
 // Define the pricing information for different models
-const modelPrices = {
-  "ada": [0.0004, 0.0004],
-  "text-ada-001": [0.0004, 0.0004],
-  "babbage": [0.0004, 0.0004],
-  "babbage-002": [0.0004, 0.0004],
-  "text-babbage-001": [0.0004, 0.0004],
-  "curie": [0.0020, 0.0020],
-  "text-curie-001": [0.0020, 0.0020],
-  "davinci": [0.0020, 0.0020],
-  "davinci-002": [0.0020, 0.0020],
-  "text-davinci-001": [0.0020, 0.0020],
-  "text-davinci-002": [0.0020, 0.0020],
-  "text-davinci-003": [0.0020, 0.0020],
-  "gpt-3.5-turbo": [0.0010, 0.0020],
-  "gpt-3.5-turbo-16k": [0.003, 0.004],
-  "gpt-3.5-turbo-instruct": [0.0015, 0.0020],
-  "gpt-4": [0.03, 0.06],
-  "gpt-gpt-4-32k": [0.06, 0.12],
-  "gpt-4-32k": [0.06, 0.12],
-  "gpt-4-1106-preview": [0.01, 0.03],
-  "gpt-4-1106-vision-preview": [0.01, 0.03],
-  "gpt-4o": [0.01, 0.02],
-  "gpt-4o-2024-05-13": [0.01, 0.02]
-};
+// const modelPrices = {
+//   "ada": [0.0004, 0.0004],
+//   "text-ada-001": [0.0004, 0.0004],
+//   "babbage": [0.0004, 0.0004],
+//   "babbage-002": [0.0004, 0.0004],
+//   "text-babbage-001": [0.0004, 0.0004],
+//   "curie": [0.0020, 0.0020],
+//   "text-curie-001": [0.0020, 0.0020],
+//   "davinci": [0.0020, 0.0020],
+//   "davinci-002": [0.0020, 0.0020],
+//   "text-davinci-001": [0.0020, 0.0020],
+//   "text-davinci-002": [0.0020, 0.0020],
+//   "text-davinci-003": [0.0020, 0.0020],
+//   "gpt-3.5-turbo": [0.0010, 0.0020],
+//   "gpt-3.5-turbo-16k": [0.003, 0.004],
+//   "gpt-3.5-turbo-instruct": [0.0015, 0.0020],
+//   "gpt-4": [0.03, 0.06],
+//   "gpt-gpt-4-32k": [0.06, 0.12],
+//   "gpt-4-32k": [0.06, 0.12],
+//   "gpt-4-1106-preview": [0.01, 0.03],
+//   "gpt-4-1106-vision-preview": [0.01, 0.03],
+//   "gpt-4o": [0.01, 0.02],
+//   "gpt-4o-2024-05-13": [0.01, 0.02]
+// };
 
-export type Model = keyof typeof modelPrices
+const chatModelPrices = {
+  "gpt-4o": [5, 15],
+  "gpt-4o-2024-05-13": [5, 15],
+
+  "gpt-4o-mini": [0.15, 0.6],
+  "gpt-4o-mini-2024-07-18": [0.15, 0.6],
+
+  "gpt-4-turbo": [10, 30],
+  "gpt-4-turbo-2024-04-09": [10, 30],
+  "gpt-4": [30, 60],
+  "gpt-4-32k": [60, 120],
+  "gpt-4-0125-preview": [10, 30],
+  "gpt-4-1106-preview": [10, 30],
+  "gpt-4-vision-preview": [10, 30],
+  "gpt-3.5-turbo-0125": [0.5, 1.5],
+  "gpt-3.5-turbo-instruct": [0.5, 2],
+  "gpt-3.5-turbo-1106": [1, 2],
+  "gpt-3.5-turbo-0613": [1.5, 2],
+  "gpt-3.5-turbo-16k-0613": [3, 4],
+  "gpt-3.5-turbo-0301": [1.5, 2],
+  "davinci-002": [2, 2],
+  "babbage-002": [0.4, 0.4],
+}
+
+export type ChatModel = keyof typeof chatModelPrices
 
 // Function to calculate the cost based on the model, prompt tokens, and sampled tokens
-export function calculateCost(model : Model, promptTokens : number, sampledTokens : number) {
+export function calculateCostChatModel(model : ChatModel, inputTokens : number, outputTokens : number) {
     
     
-    // Use destructuring to get the promptPrice and sampledPrice
-    const [promptPrice, sampledPrice] = modelPrices[model] || [0, 0];
-  
-    // Calculate the total cost based on prompt and sampled tokens
-    const cost = (promptTokens / 1000) * promptPrice + (sampledTokens / 1000) * sampledPrice;
-  
-    return cost;
+  const modelPrice = chatModelPrices[model]
+  if(!modelPrice) {
+    console.warn(`Model ${model} not found in the pricing table. Using default price of [0, 0] for both input and output tokens`)
+  }
+  // Use destructuring to get the promptPrice and sampledPrice
+  const [inputPrice, outputPrice] = modelPrice || [0, 0];
+
+  const inputTokenPrice = inputPrice / 1000000;  // $ per input token
+  const outputTokenPrice = outputPrice / 1000000; // $ per output token
+
+  const totalPrice = (inputTokens * inputTokenPrice) + (outputTokens * outputTokenPrice);
+
+  return totalPrice;
 }
 
 export type Stream = {
