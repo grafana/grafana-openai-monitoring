@@ -151,7 +151,6 @@ export async function sendLogs(logs_url : string, logs_username : number, access
           // timeout: 60000, // 60 seconds
           signal: AbortSignal.timeout(60000)
       });
-      console.log(await response.text())
       if (!response.ok) {
           throw new Error(`Error sending Logs: HTTP status ${response.status}`);
       }
