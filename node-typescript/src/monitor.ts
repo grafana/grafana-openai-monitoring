@@ -54,6 +54,17 @@ export function monitor(openai: OpenAI, {
     // @ts-ignore : monkey patching
     openai.chat.completions.create = async function(params, options) {  
 
+
+
+        // TODO
+        /**
+         * input token accumulate message array
+         * cost update for input token
+         * 
+         * cost for vision model
+         * cost for dall-e model
+         */
+
         const promptMessage = params.messages.at(-1)!
 
         let promptText = typeof promptMessage.content == "string" ? promptMessage.content : undefined

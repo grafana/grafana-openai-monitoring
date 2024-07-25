@@ -4,7 +4,11 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "tsc && node dist/index.js"
+    "start": "tsc && node dist/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "jest": {
+    "transform": {}
   },
   "keywords": [],
   "author": "",
@@ -12,6 +16,7 @@
   "description": "",
   "devDependencies": {
     "@types/node": "^20.14.10",
+    "jest": "^29.7.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.3"
   },
