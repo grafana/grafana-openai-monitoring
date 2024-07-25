@@ -7,6 +7,7 @@ import {
     Logs, 
     ChatModel,
     tokenCount,
+    overwriteChatModelPricesObject,
      
 } from './helpers.js'
 
@@ -24,6 +25,8 @@ export type Options = {
     access_token: string,
     log_prompt?: boolean,
     log_response?: boolean,
+
+    overwriteChatModelPrice?: {[key: string]: [number, number]},
 }
 
 export function monitor(openai: OpenAI, {
@@ -35,7 +38,11 @@ export function monitor(openai: OpenAI, {
     log_prompt = true,
     log_response = true,
 
+    overwriteChatModelPrice = {}
+
 }: Options) {
+
+    overwriteChatModelPricesObject(overwriteChatModelPrice)
 
     const validatedURL = check(metrics_url, logs_url, metrics_username, logs_username, access_token) // 
 

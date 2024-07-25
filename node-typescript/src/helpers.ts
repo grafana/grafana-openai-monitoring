@@ -71,7 +71,7 @@ export function check(metrics_url : string, logs_url : string, metrics_username 
 //   "gpt-4o-2024-05-13": [0.01, 0.02]
 // };
 
-const chatModelPrices = {
+let chatModelPrices = {
   "gpt-4o": [5, 15],
   "gpt-4o-2024-05-13": [5, 15],
 
@@ -93,6 +93,10 @@ const chatModelPrices = {
   "gpt-3.5-turbo-0301": [1.5, 2],
   "davinci-002": [2, 2],
   "babbage-002": [0.4, 0.4],
+}
+
+export function overwriteChatModelPricesObject(prices : {[key: string]: [number, number]}) {
+  chatModelPrices = {...chatModelPrices, ...prices}
 }
 
 export type ChatModel = keyof typeof chatModelPrices
@@ -141,12 +145,13 @@ export async function sendLogs(logs_url : string, logs_username : number, access
           headers: {
               'Content-Type': 'application/json',
               'Authorization': `Basic ${btoa(`${logs_username}:${access_token}`)}`,
+              // 'Authorization': `Bearer `,
           },
           body: JSON.stringify(logs),
           // timeout: 60000, // 60 seconds
           signal: AbortSignal.timeout(60000)
       });
-
+      console.log(await response.text())
       if (!response.ok) {
           throw new Error(`Error sending Logs: HTTP status ${response.status}`);
       }
@@ -169,13 +174,13 @@ export async function sendMetrics(metrics_url : string, metrics_username : numbe
         headers: {
           'Content-Type': 'text/plain',
           'Authorization': `Bearer ${metrics_username}:${access_token}`,
+          
         },
         body: body,
         // timeout: 60000, // 60 seconds
         signal: AbortSignal.timeout(60000)
 
       });
-  
       if (!response.ok) {
         throw new Error(`Error sending Metrics: HTTP status ${response.status}`);
       }
