@@ -54,8 +54,6 @@ export function monitor(openai: OpenAI, {
     // @ts-ignore : monkey patching
     openai.chat.completions.create = async function(params, options) {  
 
-
-
         // TODO
         /**
          * input token accumulate message array
@@ -64,8 +62,7 @@ export function monitor(openai: OpenAI, {
          * cost for vision model
          * cost for dall-e model
          */
-
-        const promptMessage = params.messages.at(-1)!
+        const promptMessage = params.messages?.at(-1)!
 
         let promptText = typeof promptMessage.content == "string" ? promptMessage.content : undefined
 
@@ -128,8 +125,10 @@ export function monitor(openai: OpenAI, {
                 } as Logs;
 
                 // Send logs to the specified logs URL
-                sendLogs(logs_url, logs_username, access_token, logs);
-
+                sendLogs(logs_url, logs_username, access_token, logs)
+                .catch((error) => {
+                    console.warn(error.message);
+                });
                 // Prepare metrics to be sent
                 const metrics = [
                     // Metric to track the number of completion tokens used in the response
@@ -153,7 +152,7 @@ export function monitor(openai: OpenAI, {
         
                 sendMetrics(validatedURL.metrics_url, metrics_username, access_token, metrics)
                 .catch((error) => {
-                    console.error(error.message);
+                    console.warn(error.message);
                 });
 
             })()
@@ -197,8 +196,10 @@ export function monitor(openai: OpenAI, {
         } as Logs;
 
         // Send logs to the specified logs URL
-        sendLogs(logs_url, logs_username, access_token, logs);
-
+        sendLogs(logs_url, logs_username, access_token, logs)
+        .catch((error) => {
+            console.warn(error.message);
+        });
         // Prepare metrics to be sent
         const metrics = [
         // Metric to track the number of completion tokens used in the response
@@ -214,7 +215,8 @@ export function monitor(openai: OpenAI, {
         `openai,job=integrations/openai,source=node_chatv2,model=${response.model} requestDuration=${duration}`,
 
         // Metric to track the duration of the API request and response cycle
-        `openai,job=integrations/openai,source=node_chatv2,model=${response.model} requestEndDuration=${duration}`,
+        // Do not send when using no stream ?
+        // `openai,job=integrations/openai,source=node_chatv2,model=${response.model} requestEndDuration=${duration}`,
 
         // Metric to track the usage cost based on the model and token usage
         `openai,job=integrations/openai,source=node_chatv2,model=${response.model} usageCost=${cost}`,
@@ -222,10 +224,86 @@ export function monitor(openai: OpenAI, {
 
         sendMetrics(validatedURL.metrics_url, metrics_username, access_token, metrics)
         .catch((error) => {
-            console.error(error.message);
+            console.warn(error.message);
         });
 
 
         return response;
     } 
+
+
+    const originalImageGenerate = openai.images.generate.bind(openai.images) as
+    (params: any, options: any) => Promise<any>;
+
+
+    // @ts-ignore : 
+    openai.images.generate = async function(params, options) {
+        const start = performance.now();
+
+        // Call original method
+        const response = await originalImageGenerate(params, options) as Promise<OpenAI.Images.ImagesResponse>;
+        const end = performance.now();
+        const duration = (end - start) / 1000;
+
+
+        const cost = 0
+
+        const logs = {
+            streams: [
+                {
+                stream: {
+                    job: 'integrations/openai/imagegeneration',
+                    model: params.model,
+                    size: params.size,
+                    quality: params.quality || "standard",
+                    prompt_tokens: tokenCount(params.prompt).toString(),
+                    prompt: log_prompt ? params.prompt : "no data",
+                    num_images: (params.n || 1).toString(),
+                },
+                values: [
+                    [
+                        (Math.floor(Date.now() / 1000) * 1000000000).toString(),
+                        log_prompt ? params.prompt : "no data",
+                    ],
+                ],
+                },
+            ],
+        };
+
+        /*
+         finish_reason: "-",//response.choices[0].finish_reason,
+                    completion_tokens: "0",//response.usage!.completion_tokens.toString(),
+                    total_tokens: "0",//response.usage!.total_tokens.toString(),
+                    role: "-",//response.choices[0].message.role,
+                    */
+        // @ts-ignore
+        sendLogs(logs_url, logs_username, access_token, logs)
+        .catch((error) => {
+            console.warn(error.message);
+        })
+
+        const metrics = [
+            // Metric to track the number of completion tokens used in the response
+            `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} size=${params.size}`,
+    
+            // Metric to track the number of prompt tokens used in the response
+            `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} promptTokens=${tokenCount(params.prompt)}`,
+    
+            // Metric to track the total number of tokens used in the response
+            `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} quality=${params.quality}`,
+    
+            // Metric to track the duration of the API request and response cycle
+            `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} requestDuration=${duration}`,
+    
+            // Metric to track the usage cost based on the model and token usage
+            `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} usageCost=${cost}`,
+        ];
+
+        sendMetrics(validatedURL.metrics_url, metrics_username, access_token, metrics)
+        .catch((error) => {
+            console.warn(error.message);
+        });
+
+        return response
+    }
 }
