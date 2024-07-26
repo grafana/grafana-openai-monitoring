@@ -1,15 +1,20 @@
 import { Console } from 'console';
 import {
     check,
-    calculateCostChatModel,
     sendLogs,
     sendMetrics,
     Logs, 
-    ChatModel,
     tokenCount,
-    overwriteChatModelPricesObject,
      
 } from './helpers.js'
+
+import {
+    calculateCostChatModel,
+    calculateCostImageModel,
+    overwriteChatModelPrices,
+    overwriteImageModelPrices,
+    ChatModel
+} from './pricingTable/index.js'
 
 import OpenAI from 'openai';
 import { ChatCompletionChunk, ChatCompletionContentPart, ChatCompletionContentPartText, ChatCompletion } from 'openai/resources/chat/completions';
@@ -26,7 +31,7 @@ export type Options = {
     log_prompt?: boolean,
     log_response?: boolean,
 
-    overwriteChatModelPrice?: {[key: string]: [number, number]},
+    overwrite_chat_model_price?: {[key: string]: [number, number]},
 }
 
 export function monitor(openai: OpenAI, {
@@ -38,11 +43,11 @@ export function monitor(openai: OpenAI, {
     log_prompt = true,
     log_response = true,
 
-    overwriteChatModelPrice = {}
+    overwrite_chat_model_price = {}
 
 }: Options) {
 
-    overwriteChatModelPricesObject(overwriteChatModelPrice)
+    overwriteChatModelPrices(overwrite_chat_model_price)
 
     const validatedURL = check(metrics_url, logs_url, metrics_username, logs_username, access_token) // 
 
@@ -60,7 +65,7 @@ export function monitor(openai: OpenAI, {
          * cost update for input token
          * 
          * cost for vision model
-         * cost for dall-e model
+         * cost for dall-e model - DONE
          */
         const promptMessage = params.messages?.at(-1)!
 
@@ -246,7 +251,7 @@ export function monitor(openai: OpenAI, {
         const duration = (end - start) / 1000;
 
 
-        const cost = 0
+        const cost = calculateCostImageModel(params.model as string, params.quality as string, params.size as string);
 
         const logs = {
             streams: [
@@ -270,12 +275,6 @@ export function monitor(openai: OpenAI, {
             ],
         };
 
-        /*
-         finish_reason: "-",//response.choices[0].finish_reason,
-                    completion_tokens: "0",//response.usage!.completion_tokens.toString(),
-                    total_tokens: "0",//response.usage!.total_tokens.toString(),
-                    role: "-",//response.choices[0].message.role,
-                    */
         // @ts-ignore
         sendLogs(logs_url, logs_username, access_token, logs)
         .catch((error) => {
@@ -283,25 +282,14 @@ export function monitor(openai: OpenAI, {
         })
 
         const metrics = [
-            // Metric to track the number of completion tokens used in the response
-            `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} size=${params.size}`,
-    
-            // Metric to track the number of prompt tokens used in the response
             `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} promptTokens=${tokenCount(params.prompt)}`,
-    
-            // Metric to track the total number of tokens used in the response
-            `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} quality=${params.quality}`,
-    
-            // Metric to track the duration of the API request and response cycle
             `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} requestDuration=${duration}`,
-    
-            // Metric to track the usage cost based on the model and token usage
             `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} usageCost=${cost}`,
         ];
 
         sendMetrics(validatedURL.metrics_url, metrics_username, access_token, metrics)
         .catch((error) => {
-            console.warn(error.message);
+            console.warn(error);
         });
 
         return response

@@ -159,6 +159,7 @@ describe('Does the override of openai.chat.completions.create() work like the or
             prompt: "a painting of a glass of water in the middle of the ocean on a sunny day",
             model: 'dall-e-3',
             size: "1024x1024",
+            quality: "standard"
         });
 
         expect(
