@@ -5,6 +5,8 @@ import {
     sendMetrics,
     Logs, 
     tokenCount,
+    getTextContentFromMessage,
+    getInputTextFromMessages,
      
 } from './helpers.js'
 
@@ -56,7 +58,7 @@ export function monitor(openai: OpenAI, {
     const originalCreate = openai.chat.completions.create.bind(openai.chat.completions) as
     (params: any, options: any) => Promise<any>;
 
-    // @ts-ignore : monkey patching
+    // @ts-ignore 
     openai.chat.completions.create = async function(params, options) {  
 
         // TODO
@@ -67,17 +69,22 @@ export function monitor(openai: OpenAI, {
          * cost for vision model
          * cost for dall-e model - DONE
          */
-        const promptMessage = params.messages?.at(-1)!
 
-        let promptText = typeof promptMessage.content == "string" ? promptMessage.content : undefined
+        const promptText = getTextContentFromMessage(params.messages?.at(-1)!)
 
-        if(!promptText){
-            let contentArray = promptMessage.content as ChatCompletionContentPart[]
-            let textPart = contentArray.find(p => p.type == "text") as ChatCompletionContentPartText
-            promptText = textPart?.text || ""
-            if(contentArray.length > 1)
-                promptText += ` [+${contentArray.length - 1} images]`
-        }
+        const inputTokens = getInputTextFromMessages(params.messages)
+        
+        // const promptMessage = params.messages?.at(-1)!
+
+        // let promptText = typeof promptMessage.content == "string" ? promptMessage.content : undefined
+
+        // if(!promptText){
+        //     let contentArray = promptMessage.content as ChatCompletionContentPart[]
+        //     let textPart = contentArray.find(p => p.type == "text") as ChatCompletionContentPartText
+        //     promptText = textPart?.text || ""
+        //     if(contentArray.length > 1)
+        //         promptText += ` [+${contentArray.length - 1} images]`
+        // }
 
         if(params.stream){
             const start = performance.now();
@@ -85,7 +92,8 @@ export function monitor(openai: OpenAI, {
             
             const [stream1, stream2] = response.tee();
             (async function() {
-                const promptTokens = tokenCount(promptText);
+                // const promptTokens = tokenCount(promptText);
+                const promptTokens = tokenCount(inputTokens);
                 let completionTokens = 0;
 
                 const chunks = []

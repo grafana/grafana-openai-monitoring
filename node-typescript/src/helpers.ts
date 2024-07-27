@@ -1,4 +1,6 @@
 import {encode} from 'gpt-tokenizer'
+import OpenAI from 'openai';
+import { ChatCompletionContentPart, ChatCompletionContentPartText } from 'openai/resources/index.mjs';
 
 
 
@@ -146,3 +148,19 @@ export async function sendMetrics(metrics_url : string, metrics_username : numbe
       throw new Error(`Error sending Metrics: ${err}`);
     }
   }
+
+
+
+export function getTextContentFromMessage(message: OpenAI.Chat.Completions.ChatCompletionMessageParam){
+  if(typeof message.content == "string")
+    return message.content
+
+  let contentArray = message.content as ChatCompletionContentPart[]
+  let textPart = contentArray.find(p => p.type == "text") as ChatCompletionContentPartText
+
+  return textPart.text
+}
+
+export function getInputTextFromMessages(messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]){
+  return messages.map(getTextContentFromMessage).join("\n")
+}

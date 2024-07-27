@@ -1,6 +1,8 @@
 import OpenAI from 'openai'
-import {monitor} from '../dist/index.js'
+import {getInputTextFromMessages, getTextContentFromMessage, monitor, tokenCount} from '../dist/index.js'
 import "dotenv/config.js";
+import exp from 'constants';
+import { calculateCostChatModel } from '../dist/pricingTable/pricingChatModels.js';
 
 
 
@@ -119,6 +121,64 @@ describe('Does the override of openai.chat.completions.create() work like the or
         expect(
             content.length
         ).toBeGreaterThan(500);
+
+        // how can i increase the timeout time? answer this question
+
+
+    }, 60000);
+
+
+    test('Chat completion with multiple messages', async () => {
+        let messages = [{ role: 'user', content: "Tell me a very short story" }]
+        let tokens1 = tokenCount(
+            getTextContentFromMessage(messages[0])
+        )
+
+        const result = await openai.chat.completions.create({
+            messages: messages,
+            model: 'gpt-4o',
+            stream: false
+        });
+
+        console.log(result.usage)
+        
+        messages.push(
+            result.choices[0].message,
+            { role: 'user', content: [
+                {
+                    type: "text",
+                    text: "Do you like your own story?"
+                }
+            ] }
+        )
+
+        const result2 = await openai.chat.completions.create({
+            messages: messages,
+            model: 'gpt-4o',
+            stream: false
+        });
+
+        console.log(result2.usage)
+
+
+        let tokens2 = tokenCount(
+            getInputTextFromMessages(messages)
+        )
+
+        let cost1 = calculateCostChatModel("gpt-4o", tokens1, 0)
+        let cost2 = calculateCostChatModel("gpt-4o", tokens2, 0)
+
+        expect(
+            cost1
+        ).toBeLessThan(cost2);
+
+        expect(
+            tokens1
+        ).toBeLessThan(tokens2);
+
+        
+
+
 
         // how can i increase the timeout time? answer this question
 
