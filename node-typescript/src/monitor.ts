@@ -7,6 +7,7 @@ import {
     tokenCount,
     getTextContentFromMessage,
     getInputTextFromMessages,
+    getImagesFromMessages,
      
 } from './helpers.js'
 
@@ -15,7 +16,8 @@ import {
     calculateCostImageModel,
     overwriteChatModelPrices,
     overwriteImageModelPrices,
-    ChatModel
+    ChatModel,
+    calculateCostVisionModel
 } from './pricingTable/index.js'
 
 import OpenAI from 'openai';
@@ -73,6 +75,8 @@ export function monitor(openai: OpenAI, {
         const promptText = getTextContentFromMessage(params.messages?.at(-1)!)
 
         const inputTokens = getInputTextFromMessages(params.messages)
+
+        const images = getImagesFromMessages(params.messages)
         
         // const promptMessage = params.messages?.at(-1)!
 
@@ -113,7 +117,13 @@ export function monitor(openai: OpenAI, {
 
                 const content = chunks.map((chunk) => chunk.choices[0].delta.content).join('')
 
-                const cost = calculateCostChatModel(params.model as ChatModel, promptTokens, completionTokens);
+                const cost = calculateCostChatModel(
+                    params.model as ChatModel, 
+                    promptTokens, 
+                    completionTokens
+                ) + calculateCostVisionModel(images)
+                    
+
                 const logs = {
                     streams: [
                         {
@@ -126,6 +136,8 @@ export function monitor(openai: OpenAI, {
                             prompt_tokens: promptTokens.toString(),
                             completion_tokens: completionTokens.toString(),
                             total_tokens: (promptTokens + completionTokens).toString(),
+                            attached_images: images.length.toString(),
+
                         },
                         values: [
                             [
@@ -144,23 +156,14 @@ export function monitor(openai: OpenAI, {
                 });
                 // Prepare metrics to be sent
                 const metrics = [
-                    // Metric to track the number of completion tokens used in the response
                     `openai,job=integrations/openai,source=node_chatv2,model=${chunks[0].model} completionTokens=${completionTokens}`,
-            
-                    // Metric to track the number of prompt tokens used in the response
                     `openai,job=integrations/openai,source=node_chatv2,model=${chunks[0].model} promptTokens=${promptTokens}`,
-            
-                    // Metric to track the total number of tokens used in the response
                     `openai,job=integrations/openai,source=node_chatv2,model=${chunks[0].model} totalTokens=${promptTokens+completionTokens}`,
-            
-                    // Metric to track the duration of the API request and response cycle
                     `openai,job=integrations/openai,source=node_chatv2,model=${chunks[0].model} requestDuration=${duration}`,
-                    
-                    // Metric to track the duration of the API request and response cycle
                     `openai,job=integrations/openai,source=node_chatv2,model=${chunks[0].model} requestEndDuration=${endDuration}`,
-            
-                    // Metric to track the usage cost based on the model and token usage
                     `openai,job=integrations/openai,source=node_chatv2,model=${chunks[0].model} usageCost=${cost}`,
+                    `openai,job=integrations/openai,source=node_chatv2,model=${chunks[0].model} images=${images?.length || 0}`,
+                    
                 ];
         
                 sendMetrics(validatedURL.metrics_url, metrics_username, access_token, metrics)
@@ -182,7 +185,12 @@ export function monitor(openai: OpenAI, {
         const duration = (end - start) / 1000;
 
          // Calculate the cost based on the response's usage
-        const cost = calculateCostChatModel(params.model as ChatModel, response.usage!.prompt_tokens, response.usage!.completion_tokens);
+        const cost = calculateCostChatModel(
+            params.model as ChatModel, 
+            response.usage!.prompt_tokens, 
+            response.usage!.completion_tokens
+        ) + calculateCostVisionModel(images)
+            
 
         // Prepare logs to be sent
         const logs = {
@@ -197,6 +205,7 @@ export function monitor(openai: OpenAI, {
                     prompt_tokens: response.usage!.prompt_tokens.toString(),
                     completion_tokens: response.usage!.completion_tokens.toString(),
                     total_tokens: response.usage!.total_tokens.toString(),
+                    attached_images: images.length.toString(),
                 },
                 values: [
                     [
@@ -215,24 +224,15 @@ export function monitor(openai: OpenAI, {
         });
         // Prepare metrics to be sent
         const metrics = [
-        // Metric to track the number of completion tokens used in the response
         `openai,job=integrations/openai,source=node_chatv2,model=${response.model} completionTokens=${response.usage!.completion_tokens}`,
-
-        // Metric to track the number of prompt tokens used in the response
         `openai,job=integrations/openai,source=node_chatv2,model=${response.model} promptTokens=${response.usage!.prompt_tokens}`,
-
-        // Metric to track the total number of tokens used in the response
         `openai,job=integrations/openai,source=node_chatv2,model=${response.model} totalTokens=${response.usage!.total_tokens}`,
-
-        // Metric to track the duration of the API request and response cycle
         `openai,job=integrations/openai,source=node_chatv2,model=${response.model} requestDuration=${duration}`,
-
-        // Metric to track the duration of the API request and response cycle
         // Do not send when using no stream ?
         // `openai,job=integrations/openai,source=node_chatv2,model=${response.model} requestEndDuration=${duration}`,
 
-        // Metric to track the usage cost based on the model and token usage
         `openai,job=integrations/openai,source=node_chatv2,model=${response.model} usageCost=${cost}`,
+        `openai,job=integrations/openai,source=node_chatv2,model=${response.model} images=${images?.length || 0}`,
         ];
 
         sendMetrics(validatedURL.metrics_url, metrics_username, access_token, metrics)

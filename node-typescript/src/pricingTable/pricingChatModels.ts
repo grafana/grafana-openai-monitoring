@@ -48,3 +48,9 @@ export function calculateCostChatModel(model : ChatModel, inputTokens : number, 
     return totalPrice;
 }
 
+export function calculateCostVisionModel(imageUrls : string[]) : number{
+
+
+    return 0
+}
+

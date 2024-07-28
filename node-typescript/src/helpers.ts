@@ -89,6 +89,7 @@ export type Stream = {
     prompt_tokens: string,
     completion_tokens: string,
     total_tokens: string,
+    attached_images: string,
   },
   values: [string, string | null][]
 }
@@ -163,4 +164,18 @@ export function getTextContentFromMessage(message: OpenAI.Chat.Completions.ChatC
 
 export function getInputTextFromMessages(messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]){
   return messages.map(getTextContentFromMessage).join("\n")
+}
+
+export function getImagesFromMessage(message: OpenAI.Chat.Completions.ChatCompletionMessageParam){
+  if(typeof message.content == "string")
+    return []
+
+  let contentArray = message.content as ChatCompletionContentPart[]
+  let imageParts = contentArray.filter(p => p.type == "image_url")
+
+  return imageParts.map(p => p.image_url.url)
+}
+
+export function getImagesFromMessages(messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]){
+  return messages.flatMap(getImagesFromMessage)
 }
