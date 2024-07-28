@@ -1,6 +1,6 @@
 {
   "name": "grafana-openai-monitoring-with-streaming",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

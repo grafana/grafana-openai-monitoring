@@ -36,6 +36,7 @@ export type Options = {
     log_response?: boolean,
 
     overwrite_chat_model_price?: {[key: string]: [number, number]},
+    overwrite_image_model_price?: {[key: string]: {[key: string]: {[key: string]: number}}}
 }
 
 export function monitor(openai: OpenAI, {
@@ -47,11 +48,13 @@ export function monitor(openai: OpenAI, {
     log_prompt = true,
     log_response = true,
 
-    overwrite_chat_model_price = {}
+    overwrite_chat_model_price = {},
+    overwrite_image_model_price = {}
 
 }: Options) {
 
     overwriteChatModelPrices(overwrite_chat_model_price)
+    overwriteImageModelPrices(overwrite_image_model_price)
 
     const validatedURL = check(metrics_url, logs_url, metrics_username, logs_username, access_token) // 
 

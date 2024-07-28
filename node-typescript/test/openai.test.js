@@ -18,7 +18,8 @@ monitor(openai, {
     logs_username: Number(process.env.LOGS_USERNAME),
     access_token: process.env.ACCESS_TOKEN,
     log_prompt: false,
-    log_response: false
+    log_response: false,
+    
 })
 
 async function sleep(ms) {

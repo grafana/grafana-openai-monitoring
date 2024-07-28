@@ -4,6 +4,10 @@ This is a forked version of [grafana-openai-monitoring](https://www.npmjs.com/pa
 
 It's build in typescript and provides types
 
+This library currently tracks 
+- `openai.chat.completions.create`
+- `openai.images.generate`
+
 ## Installation
 
 ```bash
@@ -58,6 +62,45 @@ for await(const chunk of result){
     console.log(chunk.choices[0].delta.content)
 }
 ```
+
+
+## Overwrite model pricing
+
+```js
+
+monitor(openai, {
+    metrics_url: 'https://...',
+    logs_url: 'https://...',
+    metrics_username: 12345,
+    logs_username: 12345,
+    access_token: "...",
+    log_prompt: true,
+    log_response: true,
+
+    // Default {}
+    overwrite_chat_model_price: {
+        "gpt-4o": [10, 30], // Instead of 5/15 for In/Out per million
+
+        // Include new models
+        "new-gpt-model": [0.1, 0.1] // In case there is a new model and not added yet
+    },
+
+    // Default {}
+    overwrite_image_model_price: {
+        // Model
+        "dall-e-3": {
+            // Quality "hd" or "standard"
+            "hd": {
+                // Size
+                "1024x1024": 0.04
+            }
+        }
+    }
+
+});
+
+```
+
 
 
 ## Build
