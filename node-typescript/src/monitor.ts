@@ -266,11 +266,11 @@ export function monitor(openai: OpenAI, {
                 {
                 stream: {
                     job: 'integrations/openai/imagegeneration',
+                    prompt: log_prompt ? params.prompt : "no data",
                     model: params.model,
-                    size: params.size,
+                    size: params.size || "1024x1024",
                     quality: params.quality || "standard",
                     prompt_tokens: tokenCount(params.prompt).toString(),
-                    prompt: log_prompt ? params.prompt : "no data",
                     num_images: (params.n || 1).toString(),
                 },
                 values: [
