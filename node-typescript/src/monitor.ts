@@ -17,7 +17,7 @@ import {
     overwriteChatModelPrices,
     overwriteImageModelPrices,
     ChatModel,
-    calculateCostVisionModel
+    calculateVisionCostForImages
 } from './pricingTable/index.js'
 
 import OpenAI from 'openai';
@@ -124,7 +124,7 @@ export function monitor(openai: OpenAI, {
                     params.model as ChatModel, 
                     promptTokens, 
                     completionTokens
-                ) + calculateCostVisionModel(images)
+                ) + (await calculateVisionCostForImages(images))
                     
 
                 const logs = {
@@ -192,7 +192,7 @@ export function monitor(openai: OpenAI, {
             params.model as ChatModel, 
             response.usage!.prompt_tokens, 
             response.usage!.completion_tokens
-        ) + calculateCostVisionModel(images)
+        ) + (await calculateVisionCostForImages(images))
             
 
         // Prepare logs to be sent
@@ -232,7 +232,7 @@ export function monitor(openai: OpenAI, {
         `openai,job=integrations/openai,source=node_chatv2,model=${response.model} totalTokens=${response.usage!.total_tokens}`,
         `openai,job=integrations/openai,source=node_chatv2,model=${response.model} requestDuration=${duration}`,
         // Do not send when using no stream ?
-        // `openai,job=integrations/openai,source=node_chatv2,model=${response.model} requestEndDuration=${duration}`,
+        `openai,job=integrations/openai,source=node_chatv2,model=${response.model} requestEndDuration=${duration}`,
 
         `openai,job=integrations/openai,source=node_chatv2,model=${response.model} usageCost=${cost}`,
         `openai,job=integrations/openai,source=node_chatv2,model=${response.model} images=${images?.length || 0}`,

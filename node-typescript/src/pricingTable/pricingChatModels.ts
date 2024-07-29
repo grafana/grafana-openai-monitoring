@@ -1,3 +1,7 @@
+import { calculateVisionModelCostDetail } from "./pricingVisionModel.js"
+
+import axios from "axios"
+import sharp from "sharp"
 
 export let chatModelPrices = {
     "gpt-4o": [5, 15],
@@ -48,9 +52,47 @@ export function calculateCostChatModel(model : ChatModel, inputTokens : number, 
     return totalPrice;
 }
 
-export function calculateCostVisionModel(imageUrls : string[]) : number{
+export async function calculateVisionCostForImages(imageUrls : string[]) : Promise<number> {
+    // calculateVisionModelCostDetail()
+
+    let dimensions = await Promise.all(imageUrls.map(getImageDimensions))
 
 
-    return 0
+    let totalCost = 0
+
+    for(let dimension of dimensions) {
+        let costDetail = calculateVisionModelCostDetail(dimension.width, dimension.height)
+        totalCost += costDetail.totalPrice
+    }
+
+    return totalCost
 }
 
+
+export async function getImageDimensions(uri : string) {
+    let imageBuffer;
+  
+    if (uri.startsWith('http://') || uri.startsWith('https://')) {
+      // Remote URL
+      const response = await axios.get(uri, { responseType: 'arraybuffer' });
+      imageBuffer = Buffer.from(response.data, 'binary');
+    } else if (uri.startsWith('data:image/')) {
+      // Base64 string
+      const base64Data = uri.split(',')[1];
+      imageBuffer = Buffer.from(base64Data, 'base64');
+    } else {
+
+        console.error('Invalid image URI')
+        return {
+            width: 0,
+            height: 0
+        }
+    //   throw new Error('Invalid image URI');
+    }
+  
+    const metadata = await sharp(imageBuffer).metadata();
+    return {
+      width: metadata.width || 0,
+      height: metadata.height || 0
+    };
+  }
