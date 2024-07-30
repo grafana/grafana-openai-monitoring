@@ -1,7 +1,7 @@
 import { calculateVisionModelCostDetail } from "./pricingVisionModel.js"
 
 import axios from "axios"
-import sharp from "sharp"
+import Jimp from "jimp"
 
 export let chatModelPrices = {
     "gpt-4o": [5, 15],
@@ -90,24 +90,30 @@ export async function getImageDimensions(uri : string) {
     //   throw new Error('Invalid image URI');
     }
   
-    let metadata = {} as any
+    let dimensions = {
+        width: 0,
+        height: 0
+    };
     try{
-        metadata = await sharp(imageBuffer).metadata();
+        const result = await Jimp.read(imageBuffer)
+        dimensions.width = result.getWidth()
+        dimensions.height = result.getHeight()
+        // metadata = await sharp(imageBuffer).metadata();
     } catch(e) {
         console.error('Error reading image metadata')
         console.error(e)
     }
     return {
-      width: metadata.width || 0,
-      height: metadata.height || 0
+      width: dimensions.width,
+      height: dimensions.height
     };
   }
 
 
-// export function imageSizeFromBuffer(buffer: Buffer){
-//     const metadata = imageSize(buffer)
+// export async function imageSizeFromBuffer(buffer: Buffer){
+//     const metadata = await Jimp.read(buffer)
 //     return {
-//         width: metadata.width || 0,
-//         height: metadata.height || 0
+//         width: metadata.getWidth() || 0,
+//         height: metadata.getHeight() || 0
 //     }
 // }
