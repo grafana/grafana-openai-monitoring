@@ -90,9 +90,24 @@ export async function getImageDimensions(uri : string) {
     //   throw new Error('Invalid image URI');
     }
   
-    const metadata = await sharp(imageBuffer).metadata();
+    let metadata = {} as any
+    try{
+        metadata = await sharp(imageBuffer).metadata();
+    } catch(e) {
+        console.error('Error reading image metadata')
+        console.error(e)
+    }
     return {
       width: metadata.width || 0,
       height: metadata.height || 0
     };
   }
+
+
+// export function imageSizeFromBuffer(buffer: Buffer){
+//     const metadata = imageSize(buffer)
+//     return {
+//         width: metadata.width || 0,
+//         height: metadata.height || 0
+//     }
+// }
