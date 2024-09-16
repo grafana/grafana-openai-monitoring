@@ -4,6 +4,11 @@ import axios from "axios"
 import Jimp from "jimp"
 
 export let chatModelPrices = {
+    "o1-preview": [15, 60],
+    "o1-preview-2024-09-12": [15, 60],
+    "o1-mini": [3, 15],
+    "o1-mini-2024-09-12": [3,15],
+
     "gpt-4o": [5, 15],
     "gpt-4o-2024-05-13": [5, 15],
 
