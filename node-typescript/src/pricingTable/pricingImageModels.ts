@@ -27,7 +27,7 @@ export function overwriteImageModelPrices(overwritePrices: any){
     imageModelPrices = mergeDeep(imageModelPrices, overwritePrices)
 }
   
-export function calculateCostImageModel(model: string, quality: string = "standard", size: string = "1024x1024") {
+export function calculateCostImageModel(model: string = "dall-e-2", quality: string = "standard", size: string = "1024x1024") {
   
     const price = (imageModelPrices as any)[model]?.[quality]?.[size]
   

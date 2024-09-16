@@ -23,6 +23,7 @@ import {
 import OpenAI from 'openai';
 import { ChatCompletionChunk, ChatCompletionContentPart, ChatCompletionContentPartText, ChatCompletion } from 'openai/resources/chat/completions';
 import { Stream } from 'openai/streaming';
+import { dalleMonitorFunction } from './dall-e-monitor.js';
 
 
 
@@ -251,58 +252,51 @@ export function monitor(openai: OpenAI, {
     const originalImageGenerate = openai.images.generate.bind(openai.images) as
     (params: any, options: any) => Promise<any>;
 
+    const monitorImageGenerateFunction = dalleMonitorFunction({
+        originalFunction: originalImageGenerate,
+        logPrompt: log_prompt,
+        job: 'integrations/openai/imagegeneration',
+        access_token,
+        logs_url,
+        logs_username,
+        metrics_username,
+        validatedURL
+    })
 
-    // @ts-ignore : 
-    openai.images.generate = async function(params, options) {
-        const start = performance.now();
+    // @ts-ignore
+    openai.images.generate = monitorImageGenerateFunction
 
-        // Call original method
-        const response = await originalImageGenerate(params, options) as Promise<OpenAI.Images.ImagesResponse>;
-        const end = performance.now();
-        const duration = (end - start) / 1000;
+    const originalImageCreateVariation = openai.images.createVariation.bind(openai.images) as
+    (params: any, options: any) => Promise<any>;
 
+    const monitorImageCreateVariationFunction = dalleMonitorFunction({
+        originalFunction: originalImageCreateVariation,
+        logPrompt: log_prompt,
+        job: 'integrations/openai/imagevariation',
+        access_token,
+        logs_url,
+        logs_username,
+        metrics_username,
+        validatedURL
+    })
 
-        const cost = calculateCostImageModel(params.model as string, params.quality as string, params.size as string);
+    // @ts-ignore
+    openai.images.createVariation = monitorImageCreateVariationFunction
 
-        const logs = {
-            streams: [
-                {
-                stream: {
-                    job: 'integrations/openai/imagegeneration',
-                    prompt: log_prompt ? params.prompt : "no data",
-                    model: params.model,
-                    size: params.size || "1024x1024",
-                    quality: params.quality || "standard",
-                    prompt_tokens: tokenCount(params.prompt).toString(),
-                    num_images: (params.n || 1).toString(),
-                },
-                values: [
-                    [
-                        (Math.floor(Date.now() / 1000) * 1000000000).toString(),
-                        log_prompt ? params.prompt : "no data",
-                    ],
-                ],
-                },
-            ],
-        };
+    const originalImageEdit = openai.images.edit.bind(openai.images) as
+    (params: any, options: any) => Promise<any>;
 
-        // @ts-ignore
-        sendLogs(logs_url, logs_username, access_token, logs)
-        .catch((error) => {
-            console.warn(error.message);
-        })
+    const monitorImageEditFunction = dalleMonitorFunction({
+        originalFunction: originalImageEdit,
+        logPrompt: log_prompt,
+        job: 'integrations/openai/imageedit',
+        access_token,
+        logs_url,
+        logs_username,
+        metrics_username,
+        validatedURL
+    })
 
-        const metrics = [
-            `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} promptTokens=${tokenCount(params.prompt)}`,
-            `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} requestDuration=${duration}`,
-            `openai,job=integrations/openai/imagegeneration,source=node_chatv2,model=${params.model} usageCost=${cost}`,
-        ];
-
-        sendMetrics(validatedURL.metrics_url, metrics_username, access_token, metrics)
-        .catch((error) => {
-            console.warn(error);
-        });
-
-        return response
-    }
+    // @ts-ignore
+    openai.images.edit = monitorImageEditFunction
 }

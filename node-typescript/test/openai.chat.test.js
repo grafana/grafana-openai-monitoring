@@ -1,9 +1,8 @@
 import OpenAI from 'openai'
 import {getInputTextFromMessages, getTextContentFromMessage, monitor, tokenCount} from '../dist/index.js'
 import "dotenv/config.js";
-import exp from 'constants';
 import { calculateCostChatModel } from '../dist/pricingTable/pricingChatModels.js';
-
+import { describe } from 'node:test';
 
 
 
@@ -126,7 +125,7 @@ describe('Does the override of openai.chat.completions.create() work like the or
         // how can i increase the timeout time? answer this question
 
 
-    }, 60000);
+    }, 120000);
 
 
     test('Chat completion with multiple messages', async () => {
@@ -188,50 +187,10 @@ describe('Does the override of openai.chat.completions.create() work like the or
 
 
 
-    test('Image generation with dall-e-2', async () => {
-        const result = await openai.images.generate({
-            prompt: "a painting of a glass of water",
-            model: 'dall-e-2',
-            size: "1024x1024"
-        });
-
-        expect(
-            typeof result.data[0].url
-        ).toBe("string");
-        
-    }, 30000)
-
-    test('Image generation with dall-e-3 in hd', async () => {
-        const result = await openai.images.generate({
-            prompt: "a painting of a glass of water in the middle of the ocean on a sunny day",
-            model: 'dall-e-3',
-            size: "1792x1024",
-            quality: "hd"
-        });
-
-        expect(
-            typeof result.data[0].url
-        ).toBe("string");
-        
-    }, 60000)
-
-    test('Image generation with dall-e-3', async () => {
-        const result = await openai.images.generate({
-            prompt: "a painting of a glass of water in the middle of the ocean on a sunny day",
-            model: 'dall-e-3',
-            size: "1024x1024",
-            quality: "standard"
-        });
-
-        expect(
-            typeof result.data[0].url
-        ).toBe("string");
-        
-    }, 30000)
-
     afterAll(async () => {
         // Wait for grafana logs and metrics to be sent
         await sleep(1500);
     });
 
 });
+

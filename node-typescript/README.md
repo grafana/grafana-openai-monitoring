@@ -7,6 +7,9 @@ It's build in typescript and provides types
 This library currently tracks 
 - `openai.chat.completions.create`
 - `openai.images.generate`
+- `openai.images.edit`
+- `openai.images.createVariation`
+
 
 ## Installation
 
