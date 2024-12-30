@@ -1,6 +1,6 @@
 {
   "name": "grafana-openai-monitoring-with-streaming",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -25,7 +25,8 @@
     "dotenv": "^16.4.5",
     "gpt-tokenizer": "^2.1.2",
     "jimp": "^0.22.12",
-    "openai": "^4.52.4"
+    "openai": "^4.77.0",
+    "zod": "^3.24.1"
   },
   "type": "module"
 }

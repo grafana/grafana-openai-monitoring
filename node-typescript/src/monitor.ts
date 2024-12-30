@@ -59,22 +59,40 @@ export function monitor(openai: OpenAI, {
 
     const validatedURL = check(metrics_url, logs_url, metrics_username, logs_username, access_token) // 
 
-    // Save original method
 
-    const originalCreate = openai.chat.completions.create.bind(openai.chat.completions) as
-    (params: any, options: any) => Promise<any>;
+    // const originalBetaCreate = openai.chat.completions.create.bind(openai.beta.chat.completions) as any
+    // @ts-ignore
+    openai.beta.chat.completions.parse = async function(...args) {
+        // const response = await openai.beta.chat.completions._client.chat.completions.create(args[0], {
+        const response = await openai.chat.completions.create(args[0], {
+            ...args[1],
+            headers: {
+                ...args[1]?.headers,
+                'X-Stainless-Helper-Method': 'beta.chat.completions.parse',
+            }
+        })
+        
 
-    // @ts-ignore 
+        return {
+            ...response,
+            choices: response.choices.map((choice) => ({
+                ...choice,
+                message: {
+                    ...choice.message,
+                    parsed: JSON.parse(choice.message.content as string)
+                }
+            }))
+        } as OpenAI.Chat.Completions.ChatCompletion & {
+            _request_id?: string | null;
+        }
+    }
+
+
+    
+    const originalCreate = openai.chat.completions.create.bind(openai.chat.completions) as any 
+    //@ts-ignore 
     openai.chat.completions.create = async function(params, options) {  
 
-        // TODO
-        /**
-         * input token accumulate message array
-         * cost update for input token
-         * 
-         * cost for vision model
-         * cost for dall-e model - DONE
-         */
 
         const promptText = getTextContentFromMessage(params.messages?.at(-1)!)
 
@@ -82,17 +100,6 @@ export function monitor(openai: OpenAI, {
 
         const images = getImagesFromMessages(params.messages)
         
-        // const promptMessage = params.messages?.at(-1)!
-
-        // let promptText = typeof promptMessage.content == "string" ? promptMessage.content : undefined
-
-        // if(!promptText){
-        //     let contentArray = promptMessage.content as ChatCompletionContentPart[]
-        //     let textPart = contentArray.find(p => p.type == "text") as ChatCompletionContentPartText
-        //     promptText = textPart?.text || ""
-        //     if(contentArray.length > 1)
-        //         promptText += ` [+${contentArray.length - 1} images]`
-        // }
 
         if(params.stream){
             const start = performance.now();
