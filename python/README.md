@@ -17,7 +17,7 @@ pip install grafana-openai-monitoring
 
 ## Usage
 
-The following tables shows which OpenAI function correspons to which monitoing function in this library
+The following table shows which OpenAI function corresponds to which monitoring function in this library
 
 | OpenAI Function        | Monitoring Function |
 |------------------------|---------------------|
